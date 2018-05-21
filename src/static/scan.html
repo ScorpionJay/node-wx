@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>微信二维码测试</title>
+    <script src='http://res.wx.qq.com/open/js/jweixin-1.2.0.js'></script>
+    <script src="https://cdn.bootcss.com/jquery/2.2.3/jquery.min.js"></script>
+</head>
+
+<body>
+    <div id='scanQRCode'>点击调用微信二维码测试</div>
+</body>
+<script>
+
+    var ua = navigator.userAgent.toLowerCase();
+    var isWeixin = ua.indexOf('micromessenger') != -1;
+    var isAndroid = ua.indexOf('android') != -1;
+    var isIos = (ua.indexOf('iphone') != -1) || (ua.indexOf('ipad') != -1);
+    if (!isWeixin) {
+        document.head.innerHTML = '<title>抱歉，出错了</title><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0"><link rel="stylesheet" type="text/css" href="https://res.wx.qq.com/open/libs/weui/0.4.1/weui.css">';
+        document.body.innerHTML = '<div class="weui_msg"><div class="weui_icon_area"><i class="weui_icon_info weui_icon_msg"></i></div><div class="weui_text_area"><h4 class="weui_msg_title">请在微信客户端打开链接</h4></div></div>';
+    } else {
+        $(document).ready(function () {
+            var data = {
+                url: location.href
+            }
+            $.ajax({
+                type: 'get',
+                url: '/wxShare',
+                data: data,
+                success: function (result) {
+                    console.log(result)
+                    if (result) {
+                        wx.config({
+                            debug: false,
+                            appId: result.appId,
+                            timestamp: result.timestamp,
+                            nonceStr: result.nonceStr,
+                            signature: result.signature,
+                            jsApiList: ['onMenuShareTimeline', 'onMenuShareAppMessage','scanQRCode']
+                        });
+
+                        wx.ready(function () {
+                            // 在这里调用 API
+                            var
+                                s_title = "微信测试分享标题",   // 分享标题
+                                s_link = location.href,    // 分享链接 目标链接url必须是 JS安全域名下的链接
+                                s_desc = "微信测试分享描述 hello world",   //分享描述
+                                s_imgUrl = "https://avatars1.githubusercontent.com/u/5726089"; // 分享图标
+                            //朋友圈
+                            wx.onMenuShareTimeline({
+                                title: s_title, // 分享标题
+                                link: s_link, // 分享链接
+                                imgUrl: s_imgUrl, // 分享图标
+                                desc: s_desc, // 分享描述
+                                success: function () {
+                                    //用户确认分享后执行的回调函数
+                                },
+                                cancel: function () {
+                                    // 用户取消分享后执行的回调函数
+                                }
+                            });
+
+                            //发送给好友
+                            wx.onMenuShareAppMessage({
+                                title: s_title, // 分享标题
+                                desc: s_desc, // 分享描述
+                                link: s_link, // 分享链接
+                                imgUrl: s_imgUrl, // 分享图标
+                                type: '', // 分享类型,music、video或link，不填默认为link
+                                dataUrl: '', // 如果type是music或video，则要提供数据链接，默认为空
+                                success: function () { },
+                                cancel: function () { }
+                            });
+                        });
+                    }
+                },
+                dataType: "json"
+            })
+        });
+    }
+
+    $("#scanQRCode").click(function() {
+            wx.scanQRCode({
+                // 默认为0，扫描结果由微信处理，1则直接返回扫描结果
+                needResult : 1,
+                desc : 'scanQRCode desc',
+                success : function(res) {
+                    alert(res.resultStr)
+                }
+            });
+    });
+
+</script>
+
+</html>
