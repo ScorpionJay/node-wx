@@ -13,7 +13,18 @@ const koaStatic = require("koa-static");
 const path = require("path");
 
 const app = new Koa();
+
+app.use(async (ctx, next) => {
+  ctx.set('Access-Control-Allow-Origin', '*');
+  ctx.set('Access-Control-Allow-Methods', 'PUT,DELETE,POST,GET');
+  ctx.set('Access-Control-Max-Age', 3600 * 24);
+  ctx.set('Access-Control-Allow-Credentials', true);
+  await next();
+});
+
 app.use(bodyParser());
+
+
 
 import config from "./config.js";
 import Cache from "./utils/cache";
@@ -28,6 +39,14 @@ const cache = new Cache();
 // 静态文件配置
 app.use(views(path.resolve(__dirname, "./static/"), { map: { html: "html" } }));
 app.use(koaStatic(path.resolve(__dirname, "./static/")));
+
+
+app.use(
+  route.get('/test',async ctx => {
+    console.log('------test----')
+    ctx.body = {name:'jay'};
+  })
+)
 
 /**
  * 微信连接检查
