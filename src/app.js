@@ -15,16 +15,14 @@ const path = require("path");
 const app = new Koa();
 
 app.use(async (ctx, next) => {
-  ctx.set('Access-Control-Allow-Origin', '*');
-  ctx.set('Access-Control-Allow-Methods', 'PUT,DELETE,POST,GET');
-  ctx.set('Access-Control-Max-Age', 3600 * 24);
-  ctx.set('Access-Control-Allow-Credentials', true);
+  ctx.set("Access-Control-Allow-Origin", "*");
+  ctx.set("Access-Control-Allow-Methods", "PUT,DELETE,POST,GET");
+  ctx.set("Access-Control-Max-Age", 3600 * 24);
+  ctx.set("Access-Control-Allow-Credentials", true);
   await next();
 });
 
 app.use(bodyParser());
-
-
 
 import config from "./config.js";
 import Cache from "./utils/cache";
@@ -40,13 +38,12 @@ const cache = new Cache();
 app.use(views(path.resolve(__dirname, "./static/"), { map: { html: "html" } }));
 app.use(koaStatic(path.resolve(__dirname, "./static/")));
 
-
 app.use(
-  route.get('/test',async ctx => {
-    console.log('------test----')
-    ctx.body = {name:'jay'};
+  route.get("/test", async ctx => {
+    console.log("------test----");
+    ctx.body = { name: "jay" };
   })
-)
+);
 
 /**
  * 微信连接检查
@@ -253,5 +250,85 @@ app.use(
     ctx.body = data;
   })
 );
+
+// auth
+app.use(
+  route.get("/auth", async ctx => {
+    const code = ctx.request.query.code;
+    console.log("------auth----" + code);
+    //第二步：通过code换取网页授权access_token
+    const data = await requestOauth2Access_token(code);
+    // console.log('data',JSON.stringify(data))
+    const { access_token, openid } = JSON.parse(data);
+    console.log("xxxxxx", access_token, openid);
+    //第四步：拉取用户信息(需scope为 snsapi_userinfo)
+    const userInfo = await requestAuthUserinfo(access_token, openid);
+    console.log("aaaaaaa", JSON.stringify(userInfo));
+    ctx.body = userInfo;
+  })
+);
+
+/**
+ * 根据token获取ticket
+ * @param {token} token
+ */
+const requestOauth2Access_token = async code =>
+  new Promise(function(resolve, reject) {
+    let url =
+      "https://api.weixin.qq.com/sns/oauth2/access_token?appid=APPID&secret=SECRET&code=CODE&grant_type=authorization_code";
+    url = url
+      .replace("APPID", config.appId)
+      .replace("SECRET", config.appSecret)
+      .replace("CODE", code);
+
+    request(
+      {
+        url: url,
+        method: "get"
+      },
+      (error, response, body) => {
+        console.log(body);
+        if (!error && response.statusCode == 200) {
+          try {
+            resolve(body);
+          } catch (e) {
+            reject(e);
+          }
+        } else {
+          reject(error);
+        }
+      }
+    );
+  });
+
+/**
+ * 根据token获取ticket
+ * @param {token} token
+ */
+const requestAuthUserinfo = async (ACCESS_TOKEN, OPENID) =>
+  new Promise(function(resolve, reject) {
+    let url =
+      "https://api.weixin.qq.com/sns/userinfo?access_token=ACCESS_TOKEN&openid=OPENID&lang=zh_CN";
+    url = url.replace("ACCESS_TOKEN", ACCESS_TOKEN).replace("OPENID", OPENID);
+
+    request(
+      {
+        url: url,
+        method: "get"
+      },
+      (error, response, body) => {
+        console.log(body);
+        if (!error && response.statusCode == 200) {
+          try {
+            resolve(body);
+          } catch (e) {
+            reject(e);
+          }
+        } else {
+          reject(error);
+        }
+      }
+    );
+  });
 
 export default app;

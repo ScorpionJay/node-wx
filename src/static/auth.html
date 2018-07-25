@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>auth</title>
+</head>
+
+<body>
+    auth
+</body>
+<script>
+    function getQueryString(name) {
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+        var r = window.location.search.substr(1).match(reg);
+        if (r != null) return unescape(r[2]); return null;
+    }
+    fetch('/auth?code=' + getQueryString('code')).then(response => response.json())
+        .then(data => {
+            console.log(data)
+            console.log('openid', data.openid)
+            sessionStorage.setItem('openid', data.openid)
+            location.replace('/index.html')
+        })
+        .catch(error => console.error(error));
+</script>
+
+</html>
