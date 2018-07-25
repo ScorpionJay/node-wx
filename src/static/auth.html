@@ -5,11 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>auth</title>
+    <title></title>
 </head>
 
 <body>
-    auth
+
 </body>
 <script>
     function getQueryString(name) {
@@ -22,7 +22,10 @@
             console.log(data)
             console.log('openid', data.openid)
             sessionStorage.setItem('openid', data.openid)
-            location.replace('/index.html')
+            sessionStorage.setItem('userInfo', JSON.stringify(data))
+            const state = getQueryString('state')
+            console.log(state)
+            location.replace(`${state}.html`)
         })
         .catch(error => console.error(error));
 </script>
