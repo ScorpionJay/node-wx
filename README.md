@@ -7,3 +7,11 @@
 
 https://open.weixin.qq.com/connect/oauth2/authorize?appid=APPID&redirect_uri=REDIRECT_URI&response_type=code&scope=SCOPE&state=STATE#wechat_redirect
 
+
+
+## docker
+
+~~~
+docker build -t node-wx:v1 .
+docker run --name wx -p 9991:18080 -d node-wx:v1 
+~~~
