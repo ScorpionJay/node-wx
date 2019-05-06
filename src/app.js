@@ -13,7 +13,7 @@ const koaStatic = require("koa-static");
 const path = require("path");
 
 const app = new Koa();
-
+app.use(bodyParser({ enableTypes: ["json", "form", "text"] }));
 app.use(async (ctx, next) => {
   ctx.set("Access-Control-Allow-Origin", "*");
   ctx.set("Access-Control-Allow-Methods", "PUT,DELETE,POST,GET");
@@ -21,8 +21,6 @@ app.use(async (ctx, next) => {
   ctx.set("Access-Control-Allow-Credentials", true);
   await next();
 });
-
-app.use(bodyParser());
 
 import config from "./config.js";
 import Cache from "./utils/cache";
@@ -315,6 +313,135 @@ const requestAuthUserinfo = async (ACCESS_TOKEN, OPENID) =>
       {
         url: url,
         method: "get"
+      },
+      (error, response, body) => {
+        console.log(body);
+        if (!error && response.statusCode == 200) {
+          try {
+            resolve(body);
+          } catch (e) {
+            reject(e);
+          }
+        } else {
+          reject(error);
+        }
+      }
+    );
+  });
+
+/**
+ * get menu
+ */
+app.use(
+  route.get("/getMenu", async ctx => {
+    const code = ctx.request.query.code;
+    console.log("------getMenu----" + code);
+    let token = await getToken();
+    const menu = await requestGetMunu(token);
+    console.log("aaaaaaa", JSON.stringify(menu));
+    ctx.body = menu;
+  })
+);
+
+const requestGetMunu = async ACCESS_TOKEN =>
+  new Promise(function(resolve, reject) {
+    let url =
+      "https://api.weixin.qq.com/cgi-bin/menu/get?access_token=ACCESS_TOKEN";
+    url = url.replace("ACCESS_TOKEN", ACCESS_TOKEN);
+
+    request(
+      {
+        url: url,
+        method: "get"
+      },
+      (error, response, body) => {
+        console.log(body);
+        if (!error && response.statusCode == 200) {
+          try {
+            resolve(body);
+          } catch (e) {
+            reject(e);
+          }
+        } else {
+          reject(error);
+        }
+      }
+    );
+  });
+
+/**
+ * create menu
+ */
+app.use(
+  route.post("/setMenu", async ctx => {
+    let m = "";
+    try {
+      m = JSON.parse(ctx.request.body);
+      console.log("------setMenu----" + m);
+    } catch (error) {
+      console.log("------error----" + error);
+    }
+
+    let token = await getToken();
+    m = m || {
+      button: [
+        { type: "click", name: "Button", key: "11", sub_button: [] },
+        {
+          type: "view",
+          name: "iMusic",
+          url:
+            "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx8dfda79a073efa18&redirect_uri=http://jay.aliyuntao.top/wx_oauth.html&response_type=code&scope=snsapi_userinfo&state=imusic",
+          sub_button: []
+        },
+        {
+          name: "菜单",
+          sub_button: [
+            {
+              type: "scancode_push",
+              name: "扫二维码",
+              key: "31",
+              sub_button: []
+            },
+            {
+              type: "location_select",
+              name: "获取地址",
+              key: "32",
+              sub_button: []
+            },
+            {
+              type: "view",
+              name: "公交卡余额查询",
+              url:
+                "http://shanghaicity.openservice.kankanews.com/public/traffic/jtkye",
+              sub_button: []
+            },
+            {
+              type: "view",
+              name: "活动",
+              url: "http://jay.aliyuntao.top/swiper/",
+              sub_button: []
+            }
+          ]
+        }
+      ]
+    };
+    const menu = await requestSetMenu(token, m);
+    console.log("aaaaaaa", JSON.stringify(menu));
+    ctx.body = menu;
+  })
+);
+
+const requestSetMenu = async (ACCESS_TOKEN, m) =>
+  new Promise(function(resolve, reject) {
+    let url =
+      "https://api.weixin.qq.com/cgi-bin/menu/create?access_token=ACCESS_TOKEN";
+    url = url.replace("ACCESS_TOKEN", ACCESS_TOKEN);
+
+    request(
+      {
+        url: url,
+        method: "post",
+        body: JSON.stringify(m)
       },
       (error, response, body) => {
         console.log(body);
