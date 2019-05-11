@@ -266,6 +266,19 @@ app.use(
   })
 );
 
+// auth
+app.use(
+  route.get("/authBase", async ctx => {
+    const code = ctx.request.query.code;
+    console.log("------auth----" + code);
+    //第二步：通过code换取网页授权access_token
+    const data = await requestOauth2Access_token(code);
+    // console.log('data',JSON.stringify(data))
+    const { openid } = JSON.parse(data);
+    ctx.body = { openid };
+  })
+);
+
 /**
  * 根据token获取ticket
  * @param {token} token
